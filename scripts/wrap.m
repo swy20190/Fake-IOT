@@ -8,7 +8,7 @@ function wrapped_bits = wrap(original_bits, package_size)
 %   sound vector
 %Version 1.0. created on 2020.11.16, updated on 2020.11.16, author: swy
 
-preamble = [0, 1, 0, 1, 0, 1, 0, 1];
+preamble = [1, 0, 1, 0, 1, 0, 1, 0];
 wrapped_bits = [];
 package_index = 0;
 len = length(original_bits);
