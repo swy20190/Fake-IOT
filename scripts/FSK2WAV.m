@@ -1,6 +1,10 @@
 function [] = FSK2WAV(stimulate_signal)
-%FSK2WAV 此处显示有关此函数的摘要
-%   此处显示详细说明
+%FSK2WAV transfer stimulate signal to sound wave
+%Input:
+%   stimulate signal
+%Info:
+%   save the file named by the time stamp, then play it after 5 seconds
+%Version 1.1. created on 2020.11.17, updated on 2020.11.17, author: swy
 Fs = 10000;
 audio_succ = ".wav";
 audio_name = strcat(datestr(now, 30), audio_succ);
