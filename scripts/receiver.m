@@ -9,7 +9,7 @@ R = audiorecorder(10000, 16 ,1) ;
 record(R);
 pause(30);%录制60秒
 stop(R);
-[message_1, fs] = audioread('message01.wav');
+%[message_1, fs] = audioread('message01.wav');
 message = getaudiodata(R);
 plot(message);
 
@@ -18,7 +18,7 @@ plot(message);
 preamble = [1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0];
 preamble = bits2FSK(preamble);
 
-bar = 0.5;
+bar = 0.65;
 t = 1;
 try_preamble = message(t:t+15999);
 co = [0 0 0 0];
