@@ -5,20 +5,20 @@ function FSK = bits2FSK(bits)
 %Output:
 %   FSK: stimulate signal
 %Info:
-%   sampling rate: 1/0.001 = 1000
-%   1: f=40000Hz
-%   0: f=20000Hz
+%   sampling rate: 1/0.0001 = 10000
+%   1: f=6000Hz
+%   0: f=2000Hz
 %   transfer speed: 1/0.1 = 10 bits per second
 %Version 1.0. created on 2020.11.17, updated on 2020.11.17, author: swy
 FSK = [];
 t_begin=0;
 t_end=0.1;
 for i=1:length(bits)
-    t=t_begin:0.001:t_end;
+    t=t_begin:0.0001:t_end-0.0001;
     if(bits(i)==1)
-        FSK=[FSK,sin(40000*pi*t).*(t>=t_begin & t<t_end)];
+        FSK=[FSK,sin(6000*pi*t).*(t>=t_begin & t<t_end)];
     elseif (bits(i)==0)
-        FSK=[FSK,sin(20000*pi*t).*(t>=t_begin & t<t_end)];
+        FSK=[FSK,sin(2000*pi*t).*(t>=t_begin & t<t_end)];
     end
     t_begin=t_begin+0.1;
     t_end=t_end+0.1;
