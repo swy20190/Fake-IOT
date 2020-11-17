@@ -1,9 +1,0 @@
-%This script is used to send signal to measure distance
-%Version 1.0. created on 2020.11.17, updated on 2020.11.17, author: swy
-time_vector = clock;
-h = time_vector(4);
-m = time_vector(5);
-s = time_vector(6);
-% transfer second into ms
-s = s*1000;
-pream
