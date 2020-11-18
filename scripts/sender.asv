@@ -5,7 +5,7 @@ h = time_vector(4);
 m = time_vector(5);
 s = time_vector(6);
 % transfer second into ms
-h = h*100;
+h = h*1000;
 m = m*1000;
 s = s*1000;
 preamble = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0];

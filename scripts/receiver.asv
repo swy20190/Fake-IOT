@@ -9,7 +9,7 @@ R = audiorecorder(10000, 16 ,1) ;
 record(R);
 pause(30);%录制30秒
 stop(R);
-[message_1, fs] = audioread('20201118T155934.wav');
+[message_1, fs] = audioread('20201118T152210.wav');
 message = getaudiodata(R);
 message = filter(filter_500_1200, message);
 figure(1);
@@ -33,13 +33,13 @@ while co(2) < bar
 end
 
 disp(t);
-data_bit = message(t+18000:t+65999); %此处有67999-63999 = 4000的冗余，因为之后需要准确判断前导码结束位置
+data_bit = message(t+16000:t+67999); %此处有67999-63999 = 4000的冗余，因为之后需要准确判断前导码结束位置
 figure(3);
 plot(data_bit);
 
 f = 1000;%目标频率
 [n,~] = size(data_bit);%获取数据的长度值
-window = 400;%设置窗口大小为200个采样点
+window = 200;%设置窗口大小为200个采样点
 impulse_fft_1k = zeros(n,1);%定义变量数组impulse_fft，用于存储每个时刻对应的数据段中该频率信号的强度
 for i= 1:1:n-window
     %对从当前点开始的window长度的数据进行傅里叶变换
@@ -64,17 +64,17 @@ plot(impulse_fft_1k);
 
 
 position_impulse=[];%用于存储峰值的index
-half_window = 200;
+half_window = 100;
 for i= half_window+1:1:n-half_window
     %进行峰值判断
-    if impulse_fft_1k(i)>0.3 && impulse_fft_1k(i)==max(impulse_fft_1k(i-half_window:i+half_window))
+    if impulse_fft_1k(i)>0.5 && impulse_fft_1k(i)==max(impulse_fft_1k(i-half_window:i+half_window))
         position_impulse=[position_impulse,i];
     end
 end
 
 disp(position_impulse);
 
-message_bin = zeros(48, 1);
+message_bin = zeros(52, 1);
 for i=1:1:length(position_impulse)
     message_bin(ceil(position_impulse/1000)) = 1;
 end
@@ -82,12 +82,12 @@ end
 disp(message_bin);
 % 确定前导码结束准确位置(前四位中的第一个"10")
 real_message_start = 1;
-%for i=1:1:3
-%   if(message_bin(i) == 1)
-%        real_message_start = i+2;
-%        break;
-%    end
-%end
+for i=1:1:3
+    if(message_bin(i) == 1)
+        real_message_start = i+2;
+        break;
+    end
+end
 
 real_message_bin = message_bin(real_message_start:real_message_start+47);
 real_message_bin = reshape(real_message_bin',[16, 3])';
