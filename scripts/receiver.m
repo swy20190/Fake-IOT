@@ -89,6 +89,8 @@ for i=1:1:3
     end
 end
 
+real_message_start = real_message_start + 2;
+
 real_message_bin = message_bin(real_message_start:real_message_start+47);
 real_message_bin = reshape(real_message_bin',[16, 3])';
 message_vector = bi2de(real_message_bin, 'left-msb');

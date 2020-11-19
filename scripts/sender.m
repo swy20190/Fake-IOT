@@ -5,11 +5,11 @@ h = time_vector(4);
 m = time_vector(5);
 s = time_vector(6);
 % transfer second into ms
-h = h*100;
-m = m*1000;
+
+m = m*100;
 s = s*1000;
 preamble = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0];
-data_vector = [h, m, s];
+data_vector = [m, s, m];
 data_bin = de2bi(data_vector, 16, 'left-msb');
 disp(data_bin);
 data_bits = reshape(double(data_bin).',48,1).';
