@@ -16,4 +16,4 @@ data_bits = reshape(double(data_bin).',48,1).';
 send_bits = [preamble, data_bits];
 FSK_code = bits2FSK(send_bits);
 FSK2WAV(FSK_code);
-sound(FSK_code, 10000);
+% sound(FSK_code, 10000);
