@@ -1,5 +1,5 @@
 % This script receives the signal while measuring distance
-%Version 1.2. created on 2020.11.17, updated on 2020.11.19, author: swy
+%Version 1.2. created on 2020.11.17, updated on 2020.11.21, author: swy
 start_record_vector = clock;
 start_h = start_record_vector(4);
 start_m = start_record_vector(5);
@@ -9,9 +9,9 @@ R = audiorecorder(48000, 16 ,1) ;
 record(R);
 pause(30);%录制30秒
 stop(R);
-[message_1, fs] = audioread('20201119T152026.wav');
+[message_1, fs] = audioread('20201121T172502.wav');
 message = getaudiodata(R);
-% message = filter(filter_500_1200, message);
+% message = filter(filter_4k_5k, message);
 figure(1);
 plot(message);
 figure(2);
@@ -19,10 +19,10 @@ plot(message_1);
 
 
 %examine where to begin the signal
-preamble = [1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0];
+preamble = [0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1];
 preamble = bits2FSK(preamble);
 
-bar = 0.75;
+bar = 0.7;
 t = 1;
 try_preamble = message(t:t+76799);
 co = [0 0 0 0];
@@ -33,7 +33,7 @@ while co(2) < bar
 end
 
 disp(t);
-data_bit = message(t+76800:t+249599); %此处有4*4800 = 19200的冗余，因为之后需要准确判断前导码结束位置
+data_bit = message(t+76800:t+335999); %此处有6*4800 = 28800的冗余，因为之后需要准确判断前导码结束位置
 figure(3);
 plot(data_bit);
 
@@ -64,32 +64,33 @@ plot(impulse_fft_5k);
 
 
 position_impulse=[];%用于存储峰值的index
-half_window = 200;
+half_window = 800;
 for i= half_window+1:1:n-half_window
     %进行峰值判断
-    if impulse_fft_5k(i)>25 && impulse_fft_5k(i)==max(impulse_fft_5k(i-half_window:i+half_window))
+    if impulse_fft_5k(i)>40 && impulse_fft_5k(i)==max(impulse_fft_5k(i-half_window:i+half_window))
         position_impulse=[position_impulse,i];
     end
 end
 
 disp(position_impulse);
 
-message_bin = zeros(52, 1);
+message_bin = zeros(54, 1);
 for i=1:1:length(position_impulse)
     message_bin(ceil(position_impulse/4800)) = 1;
 end
 
 disp(message_bin);
-% 确定前导码结束准确位置(前四位中的第一个"10")
+% 确定前导码结束准确位置(前6位中的最后一个1)
 real_message_start = 1;
-for i=1:1:3
+last_one_index = 1;
+for i=1:1:6
    if(message_bin(i) == 1)
-        real_message_start = i+2;
-        break;
+        last_one_index = i;
     end
 end
+real_message_start = last_one_index+1;
 
-real_message_start = real_message_start + 2;
+% real_message_start = real_message_start + 2;
 
 real_message_bin = message_bin(real_message_start:real_message_start+47);
 real_message_bin = reshape(real_message_bin',[16, 3])';

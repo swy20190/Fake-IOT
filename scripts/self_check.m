@@ -27,4 +27,7 @@ while co(2) < bar
 end
 
 disp(t);
+% measure the deviation of the beginning of preamble
+delta_t = 4800*8 - t;
+disp(delta_t);
 
