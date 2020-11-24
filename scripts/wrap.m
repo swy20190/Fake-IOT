@@ -6,9 +6,9 @@ function wrapped_bits = wrap(original_bits, package_size)
 %Output:
 %   wrapped_bits: the wrapped bit vector which can be transferred into
 %   sound vector
-%Version 1.0. created on 2020.11.16, updated on 2020.11.16, author: swy
+%Version 1.1. created on 2020.11.16, updated on 2020.11.24, author: swy
 
-preamble = [1, 0, 1, 0, 1, 0, 1, 0];
+preamble = [0 1 0 1 0 1 0 1];
 wrapped_bits = [];
 package_index = 0;
 len = length(original_bits);
