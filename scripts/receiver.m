@@ -97,3 +97,5 @@ real_message_bin = reshape(real_message_bin',[16, 3])';
 message_vector = bi2de(real_message_bin, 'left-msb');
 disp(message_vector);
 
+% calculate the distance
+
