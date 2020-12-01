@@ -1,5 +1,5 @@
 % This script decodes the signal while transmitting message
-%Version 1.0. created on 2020.11.30, updated on 2020.11.30, author: swy
+%Version 1.0. created on 2020.11.30, updated on 2020.12.1, author: swy
 [message, fs] = audioread('tmp.wav');
 
 %filter
@@ -66,5 +66,63 @@ for i=1:1:length(position_impulse)
     message_bin(ceil(position_impulse/4800)) = 1;
 end
 
+real_message_start = 1;
+last_one_index = 1;
+for i=1:1:3
+   if(message_bin(i) == 1)
+        last_one_index = i;
+    end
+end
+real_message_start = last_one_index+1;
+
+real_message_bin = message_bin(real_message_start:len);
+
+curr_package_index = 0;
+curr_bin_index = 1;
+real_message_bin = real_message_bin';
 
 
+% 信息的unicode码
+message_dec = [];
+
+
+
+while curr_bin_index < len
+    if curr_bin_index + 7 > len
+        break
+    end
+    package_index_bin = real_message_bin(curr_bin_index:curr_bin_index+7);
+    
+    package_index_dec = bi2de(package_index_bin, 'left-msb');
+    if package_index_dec(1)==curr_package_index
+        % 包序号正确，解析包长度
+        curr_bin_index = curr_bin_index+8;
+        curr_package_len = bi2de(real_message_bin(curr_bin_index:curr_bin_index+7),'left-msb');
+        % 指针移至包内容首位
+        curr_bin_index = curr_bin_index+8;
+        curr_package_end = curr_bin_index+curr_package_len;
+        while curr_bin_index+7 < curr_package_end
+            tmp_dec_unicode = bi2de(real_message_bin(curr_bin_index:curr_bin_index+7),'left-msb');
+            message_dec = [message_dec tmp_dec_unicode];
+            curr_bin_index = curr_bin_index+8;
+        end
+        curr_bin_index = curr_package_end+8;
+        curr_package_index = curr_package_index+1;
+    else
+        % 包序号错误，说明出错，寻找下一个前导码
+        bin_pre = [0 1 0 1 0 1 0 1];
+        while curr_bin_index < len
+            if isequal(bin_pre, real_message_bin(curr_bin_index:curr_bin_index+7))
+                % 找到下一段前导码
+                % 更新指针位置
+                curr_bin_index = curr_bin_index+8;
+                % 修正当前包序号
+                curr_package_index = bi2de(real_message_bin(curr_bin_index:curr_bin_index+7), 'left-msb');
+                break;
+            end
+            % 没找到前导码
+            curr_bin_index = curr_bin_index+1;
+        end
+    end
+    
+end
