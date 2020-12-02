@@ -137,3 +137,14 @@ while curr_bin_index < len
     end
     
 end
+
+% unicode ---> char
+message_char = '';
+unicode_len = length(message_dec);
+for i=1:1:unicode_len
+    tmp_char = native2unicode(message_dec(i));
+    message_char = [message_char, tmp_char];
+end
+
+disp(message_char);
+
