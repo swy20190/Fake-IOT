@@ -82,21 +82,13 @@ curr_bin_index = 1;
 real_message_bin = real_message_bin';
 
 
-
-%pseudo_dec = [];
-%p_index = 1;
-%while p_index < 512
-%    tmp = bi2de(real_message_bin(p_index:p_index+7),'left-msb');
-%    pseudo_dec = [pseudo_dec tmp];
-%    p_index = p_index+8;
-%end
 % 信息的unicode码
 message_dec = [];
 
 
 
 while curr_bin_index < len
-    if curr_bin_index + 512 > len
+    if curr_bin_index + 7 > len
         break
     end
     package_index_bin = real_message_bin(curr_bin_index:curr_bin_index+7);
@@ -105,9 +97,7 @@ while curr_bin_index < len
     if package_index_dec(1)==curr_package_index
         % 包序号正确，解析包长度
         curr_bin_index = curr_bin_index+8;
-        if curr_bin_index+16 > len
-            break;
-        end
+        if curr_bin_index 
         curr_package_len = bi2de(real_message_bin(curr_bin_index:curr_bin_index+7),'left-msb');
         % 指针移至包内容首位
         curr_bin_index = curr_bin_index+8;
@@ -122,7 +112,7 @@ while curr_bin_index < len
     else
         % 包序号错误，说明出错，寻找下一个前导码
         bin_pre = [0 1 0 1 0 1 0 1];
-        while curr_bin_index+8 < len
+        while curr_bin_index < len
             if isequal(bin_pre, real_message_bin(curr_bin_index:curr_bin_index+7))
                 % 找到下一段前导码
                 % 更新指针位置
