@@ -1,6 +1,0 @@
-function [] = message_recorder_func()
-%MESSAGE_RECORDER_FUNC record the 
-%   此处显示详细说明
-
-end
-
