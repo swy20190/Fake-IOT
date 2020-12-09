@@ -56,7 +56,7 @@ position_impulse=[];%用于存储峰值的index
 half_window = 800;
 for i= half_window+1:1:n-half_window
     %进行峰值判断
-    if impulse_fft_6k(i)>90 && impulse_fft_6k(i)==max(impulse_fft_6k(i-half_window:i+half_window))
+    if impulse_fft_6k(i)>60 && impulse_fft_6k(i)==max(impulse_fft_6k(i-half_window:i+half_window))
         position_impulse=[position_impulse,i];
     end
 end
@@ -76,8 +76,53 @@ end
 real_message_start = last_one_index+1;
 
 real_message_bin = message_bin(real_message_start:len);
+len = length(real_message_bin);
+real_message_vec = real_message_bin;
 
-curr_package_index = 0;
-curr_bin_index = 1;
-%real_message_bin = real_message_bin';
+
+real_message_bin = real_message_bin';
+
+% 结果矩阵，每一行代表一个包，第一列为包编号, 每行50列，不足的列用-1补全（方便输出到xls）
+result = [];
+package_index = 1;
+curr_ptr = 1;
+bin_pre = [0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1];
+
+while (curr_ptr+8<len)
+    curr_row = [];
+    curr_len = bi2de(real_message_bin(curr_ptr:curr_ptr+7), 'left-msb');
+    curr_ptr = curr_ptr+8;
+    curr_row = [curr_row, package_index];
+    package_index = package_index+1;
+    if(curr_ptr+curr_len >= len)
+        break;
+    end
+    curr_row = [curr_row, real_message_bin(curr_ptr:curr_ptr+curr_len-1)];
+    curr_ptr = curr_ptr+curr_len;
+    %将当前行补全
+    curr_row_len = length(curr_row);
+    if(curr_row_len < 50)
+        for i=1:1:50-curr_row_len
+            curr_row = [curr_row, -1];
+        end
+    end
+    %将当前行加入结果矩阵
+    result = [result;curr_row];
+    %寻找下一段前导码
+    find_next = 0;
+    while(curr_ptr+19 <= len)
+        if isequal(bin_pre, real_message_bin(curr_ptr:curr_ptr+19))
+            find_next = 1;
+            break;
+        end
+        curr_ptr = curr_ptr+1;
+    end
+    if(find_next == 0)
+        break;
+    end
+    curr_ptr = curr_ptr+20;
+end
+
+
+xlswrite('result.xls', result);
 

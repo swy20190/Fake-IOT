@@ -3,15 +3,15 @@
 [message, fs] = audioread('res.wav');
 
 %filter
-message = filter(filter_4k_5k(), message);
+message = filter(filter_4k_6k(), message);
 figure(1);
 plot(message);
 
 %find the start of signal
-preamble = [0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1];
+preamble = [0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1];
 preamble = bits2FSK(preamble);
 
-bar = 0.7;
+bar = 0.8;
 t = 1;
 try_preamble = message(t:t+23999);
 co = [0 0 0 0];
@@ -56,19 +56,19 @@ position_impulse=[];%用于存储峰值的index
 half_window = 800;
 for i= half_window+1:1:n-half_window
     %进行峰值判断
-    if impulse_fft_5k(i)>90 && impulse_fft_5k(i)==max(impulse_fft_5k(i-half_window:i+half_window))
+    if impulse_fft_6k(i)>60 && impulse_fft_6k(i)==max(impulse_fft_6k(i-half_window:i+half_window))
         position_impulse=[position_impulse,i];
     end
 end
 
 message_bin = zeros(len, 1);
 for i=1:1:length(position_impulse)
-    message_bin(ceil(position_impulse/4800)) = 1;
+    message_bin(ceil(position_impulse/1200)) = 1;
 end
 
 real_message_start = 1;
 last_one_index = 1;
-for i=1:1:3
+for i=1:1:5
    if(message_bin(i) == 1)
         last_one_index = i;
     end
@@ -76,74 +76,49 @@ end
 real_message_start = last_one_index+1;
 
 real_message_bin = message_bin(real_message_start:len);
+len = length(real_message_bin);
 
-curr_package_index = 0;
-curr_bin_index = 1;
+
+
 real_message_bin = real_message_bin';
 
+% 结果矩阵，每一行代表一个包，第一列为包编号, 每行50列，不足的列用-1补全（方便输出到xls）
+result = [];
+package_index = 1;
+curr_ptr = 1;
 
-
-%pseudo_dec = [];
-%p_index = 1;
-%while p_index < 512
-%    tmp = bi2de(real_message_bin(p_index:p_index+7),'left-msb');
-%    pseudo_dec = [pseudo_dec tmp];
-%    p_index = p_index+8;
-%end
-% 信息的unicode码
-message_dec = [];
-
-
-
-while curr_bin_index < len
-    if curr_bin_index + 512 > len
-        break
+while (curr_ptr+8<len)
+    curr_row = [];
+    curr_len = bi2de(real_message_bin(curr_ptr:curr_ptr+7));
+    curr_ptr = curr_ptr+8;
+    curr_row = [curr_row, package_index];
+    package_index = package_index+1;
+    if(curr_ptr+curr_len >= len)
+        break;
     end
-    package_index_bin = real_message_bin(curr_bin_index:curr_bin_index+7);
-    
-    package_index_dec = bi2de(package_index_bin, 'left-msb');
-    if package_index_dec(1)==curr_package_index
-        % 包序号正确，解析包长度
-        curr_bin_index = curr_bin_index+8;
-        if curr_bin_index+16 > len
+    curr_row = [curr_row, real_message_bin(curr_ptr:curr_ptr+curr_len-1)];
+    curr_ptr = curr_ptr+curr_len;
+    %将当前行补全
+    curr_row_len = length(curr_row);
+    if(curr_row_len < 50)
+        for i=1:1:50-curr_row_len
+            curr_row = [curr_row, -1]
+        end
+    end
+    %将当前行加入结果矩阵
+    result = [result;curr_row];
+    %寻找下一段前导码
+    find_next = 0;
+    while(curr_ptr+19 <= len)
+        if isequal(preamble, real_message_bin(curr_ptr:curr_ptr+19))
+            find_next = 1;
             break;
         end
-        curr_package_len = bi2de(real_message_bin(curr_bin_index:curr_bin_index+7),'left-msb');
-        % 指针移至包内容首位
-        curr_bin_index = curr_bin_index+8;
-        curr_package_end = curr_bin_index+curr_package_len;
-        while curr_bin_index+7 < curr_package_end
-            tmp_dec_unicode = bi2de(real_message_bin(curr_bin_index:curr_bin_index+7),'left-msb');
-            message_dec = [message_dec tmp_dec_unicode];
-            curr_bin_index = curr_bin_index+8;
-        end
-        curr_bin_index = curr_package_end+8;
-        curr_package_index = curr_package_index+1;
-    else
-        % 包序号错误，说明出错，寻找下一个前导码
-        bin_pre = [0 1 0 1 0 1 0 1];
-        while curr_bin_index+8 < len
-            if isequal(bin_pre, real_message_bin(curr_bin_index:curr_bin_index+7))
-                % 找到下一段前导码
-                % 更新指针位置
-                curr_bin_index = curr_bin_index+8;
-                % 修正当前包序号
-                curr_package_index = bi2de(real_message_bin(curr_bin_index:curr_bin_index+7), 'left-msb');
-                break;
-            end
-            % 没找到前导码
-            curr_bin_index = curr_bin_index+1;
-        end
+        curr_ptr = curr_ptr+1;
     end
-    
+    if(find_next == 0)
+        break;
+    end
 end
 
-% unicode ---> char
-message_char = '';
-unicode_len = length(message_dec);
-for i=1:1:unicode_len
-    tmp_char = native2unicode(message_dec(i));
-    message_char = [message_char, tmp_char];
-end
 
-disp(message_char);
