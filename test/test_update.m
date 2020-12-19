@@ -1,6 +1,6 @@
 % This script test the decoding ability using the given 'res.wav'
 %Version 1.0. created on 2020.12.9, updated on 2020.12.9, author: swy
-[message, fs] = audioread('res.wav');
+[message, fs] = audioread('tmp.wav');
 
 %filter
 message = filter(filter_4k_6k(), message);

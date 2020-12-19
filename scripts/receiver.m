@@ -1,101 +1,82 @@
-% This script receives the signal while measuring distance
-%Version 1.2. created on 2020.11.17, updated on 2020.11.21, author: swy
-start_record_vector = clock;
-start_h = start_record_vector(4);
-start_m = start_record_vector(5);
-start_s = start_record_vector(6);
+function varargout = receiver(varargin)
+% RECEIVER MATLAB code for receiver.fig
+%      RECEIVER, by itself, creates a new RECEIVER or raises the existing
+%      singleton*.
+%
+%      H = RECEIVER returns the handle to a new RECEIVER or the handle to
+%      the existing singleton*.
+%
+%      RECEIVER('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in RECEIVER.M with the given input arguments.
+%
+%      RECEIVER('Property','Value',...) creates a new RECEIVER or raises the
+%      existing singleton*.  Starting from the left, property value pairs are
+%      applied to the GUI before receiver_OpeningFcn gets called.  An
+%      unrecognized property name or invalid value makes property application
+%      stop.  All inputs are passed to receiver_OpeningFcn via varargin.
+%
+%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
+%      instance to run (singleton)".
+%
+% See also: GUIDE, GUIDATA, GUIHANDLES
 
-R = audiorecorder(48000, 16 ,1) ;
-record(R);
-pause(30);%录制30秒
-stop(R);
-[message_1, fs] = audioread('20201121T172502.wav');
-message = getaudiodata(R);
-% message = filter(filter_4k_5k, message);
-figure(1);
-plot(message);
-figure(2);
-plot(message_1);
+% Edit the above text to modify the response to help receiver
 
+% Last Modified by GUIDE v2.5 15-Nov-2020 20:41:27
 
-%examine where to begin the signal
-preamble = [0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1];
-preamble = bits2FSK(preamble);
-
-bar = 0.7;
-t = 1;
-try_preamble = message(t:t+76799);
-co = [0 0 0 0];
-while co(2) < bar
-    t = t+1;
-    try_preamble = message(t:t+76799);
-    co = corrcoef(try_preamble, preamble);
+% Begin initialization code - DO NOT EDIT
+gui_Singleton = 1;
+gui_State = struct('gui_Name',       mfilename, ...
+                   'gui_Singleton',  gui_Singleton, ...
+                   'gui_OpeningFcn', @receiver_OpeningFcn, ...
+                   'gui_OutputFcn',  @receiver_OutputFcn, ...
+                   'gui_LayoutFcn',  [] , ...
+                   'gui_Callback',   []);
+if nargin && ischar(varargin{1})
+    gui_State.gui_Callback = str2func(varargin{1});
 end
 
-disp(t);
-data_bit = message(t+76800:t+335999); %此处有6*4800 = 28800的冗余，因为之后需要准确判断前导码结束位置
-figure(3);
-plot(data_bit);
-
-f = 5000;%目标频率
-[n,~] = size(data_bit);%获取数据的长度值
-window = 400;%设置窗口大小为400个采样点
-impulse_fft_5k = zeros(n,1);%定义变量数组impulse_fft，用于存储每个时刻对应的数据段中该频率信号的强度
-for i= 1:1:n-window
-    %对从当前点开始的window长度的数据进行傅里叶变换
-    y = fft(data_bit(i:i+window-1));
-    y = abs(y);
-    %得到目标频率傅里叶变换结果中对应的index
-    index_impulse = round(f/fs*window);
-    %考虑到声音通信过程中的频率偏移，我们取以目标频率为中心的5个频率采样点中最大的一个来代表目标频率的强度
-    impulse_fft_5k(i)=max(y(index_impulse-2:index_impulse+2));
+if nargout
+    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+else
+    gui_mainfcn(gui_State, varargin{:});
 end
-
-% 滑动平均（均值滤波）
-sliding_window = 5;
-impulse_fft_tmp = impulse_fft_5k;
-for i = 1+sliding_window:1:n-sliding_window
-    impulse_fft_tmp(i)=mean(impulse_fft_5k(i-sliding_window:i+sliding_window));
-end
-impulse_fft_5k = impulse_fft_tmp;
-figure(4)
-plot(impulse_fft_5k);
+% End initialization code - DO NOT EDIT
 
 
+% --- Executes just before receiver is made visible.
+function receiver_OpeningFcn(hObject, eventdata, handles, varargin)
+% This function has no output args, see OutputFcn.
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% varargin   command line arguments to receiver (see VARARGIN)
 
-position_impulse=[];%用于存储峰值的index
-half_window = 800;
-for i= half_window+1:1:n-half_window
-    %进行峰值判断
-    if impulse_fft_5k(i)>40 && impulse_fft_5k(i)==max(impulse_fft_5k(i-half_window:i+half_window))
-        position_impulse=[position_impulse,i];
-    end
-end
+% Choose default command line output for receiver
+handles.output = hObject;
 
-disp(position_impulse);
+% Update handles structure
+guidata(hObject, handles);
 
-message_bin = zeros(54, 1);
-for i=1:1:length(position_impulse)
-    message_bin(ceil(position_impulse/4800)) = 1;
-end
+% UIWAIT makes receiver wait for user response (see UIRESUME)
+% uiwait(handles.figure1);
 
-disp(message_bin);
-% 确定前导码结束准确位置(前6位中的最后一个1)
-real_message_start = 1;
-last_one_index = 1;
-for i=1:1:6
-   if(message_bin(i) == 1)
-        last_one_index = i;
-    end
-end
-real_message_start = last_one_index+1;
 
-% real_message_start = real_message_start + 2;
+% --- Outputs from this function are returned to the command line.
+function varargout = receiver_OutputFcn(hObject, eventdata, handles) 
+% varargout  cell array for returning output args (see VARARGOUT);
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 
-real_message_bin = message_bin(real_message_start:real_message_start+47);
-real_message_bin = reshape(real_message_bin',[16, 3])';
-message_vector = bi2de(real_message_bin, 'left-msb');
-disp(message_vector);
+% Get default command line output from handles structure
+varargout{1} = handles.output;
 
-% calculate the distance
 
+% --- Executes on button press in pushbutton1.
+function pushbutton1_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+messageresult='nothing yet';
+set(handles.result,'string',messageresult);
