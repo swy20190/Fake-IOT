@@ -19,4 +19,5 @@ data_bits = reshape(double(data_bin).',48,1).';
 send_bits = [preamble, data_bits];
 FSK_code = bits2FSK(send_bits);
 FSK2WAV(FSK_code);
-sound(FSK_code, 10000);
+% 采样率48000，否则解码会出问题
+sound(FSK_code, 48000);
