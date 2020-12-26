@@ -150,6 +150,10 @@ for i=1:1:unicode_len
     message_char = [message_char, tmp_char];
 end
 
+disp(message_char);
+fid = fopen('decoder.txt','w');
+fprintf(fid,'%s',message_char);
+fclose(fid);
 
 end
 
